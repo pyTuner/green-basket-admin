@@ -6,6 +6,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Dashboard() {
     // const { user, signOut } = useAuth();
+
+    const user ={
+        name:'tejas',
+    email:'tejas@email.com'
+    }
     const router = useRouter();
 
 
