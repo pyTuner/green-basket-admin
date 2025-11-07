@@ -43,6 +43,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "96e216cb-61b3-4dbd-9401-288669ce4759"
+      }
+    },
+    "owner": "mern-solutions"
   }
 }
