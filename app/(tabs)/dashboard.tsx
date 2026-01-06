@@ -1,10 +1,11 @@
-import { GetProductList } from "@/api/axiosClient";
+import { deleteProductApi, GetProductList } from "@/api/axiosClient";
 import ProductCartItem from "@/components/dashboard/ProductCartItem";
 import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,9 +14,10 @@ import {
 } from "react-native";
 
 export default function Dashboard() {
-  const { user, signOut, isLoading, setIsLoading } = useAuth();
+  const { user, signOut, isLoading, setIsLoading, refresh, setRefresh } =
+    useAuth();
   const router = useRouter();
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -26,21 +28,38 @@ export default function Dashboard() {
     }, 1000);
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
-    const response = await GetProductList(user?.token as string);
-    if (response.status === 200) {
-      setProducts(response.body);
+    try {
+      const response = await GetProductList(user?.token as string);
+      if (response.status === 200) {
+        setProducts(response.body);
+      }
+    } finally {
       setIsLoading(false);
-    } else {
+    }
+  }, [user?.token, setIsLoading]);
+
+  const deleteProduct = async (productId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await deleteProductApi(productId, user?.token as string);
+      if (response?.status === 200) {
+        Alert.alert("Success", "Product deleted successfully");
+        await fetchProducts();
+      } else {
+        Alert.alert("Error", "Failed to delete product");
+      }
+    } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.token]);
+    if (!products.length || refresh) {
+      fetchProducts().then(() => setRefresh(false));
+    }
+  }, [refresh, fetchProducts, products.length, setRefresh]);
 
   if (!user || isLoading) {
     return (
@@ -61,7 +80,7 @@ export default function Dashboard() {
           Mobile Number: {user.primaryPhoneNumber}
         </Text>
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/product-form")}
+          onPress={() => router.push("/(admin)/product-form")}
           style={styles.btn}
         >
           <Text style={{ color: "#fff" }}>New Product</Text>
@@ -73,20 +92,23 @@ export default function Dashboard() {
               product={product}
               quantity={1}
               role={user?.role}
-              editProduct={() =>
+              editProduct={() => {
                 router.push({
-                pathname: "/(tabs)/product-form",
-                params: {
-                  id: product._id,
-                  name: product.name,
-                  description: product.description,
-                  price: product.price,
-                  discount: product.discount,
-                  stock: product.stock,
-                  image: product.image,
-                },
-              })
-            }
+                  pathname: "/(admin)/product-form",
+                  params: {
+                    id: product._id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    discount: product.discount,
+                    stock: product.stock,
+                    image: product.image,
+                    categoryId: product.categoryId,
+                    unitId: product.unitId,
+                  },
+                });
+              }}
+              deleteProduct={() => deleteProduct(product._id)}
             />
           ))
         ) : (

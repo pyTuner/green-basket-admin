@@ -1,27 +1,33 @@
 import {
   addProductApi,
+  GetCategoryList,
   getProductApi,
+  GetUnitList,
   updateProductApi,
 } from "@/api/axiosClient";
+import CategoryDropdown from "@/components/ui/CategoryDropdown";
+import UnitDropdown from "@/components/ui/UnitDropdown";
 import { useAuth } from "@/store/context/AuthContext";
+import { Product } from "@/types/products";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function ProductForm() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { user, signOut, setIsLoading } = useAuth();
+  const { user, signOut, setIsLoading, setRefresh } = useAuth();
   const isEdit = !!params?.id;
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -30,6 +36,32 @@ export default function ProductForm() {
   const [stock, setStock] = useState("");
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [units, setUnits] = useState([]);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    const response = await GetCategoryList(user?.token as string);
+    if (response.status === 200) {
+      setCategories(response.body);
+      setIsLoading(false);
+    } else {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUnits = async () => {
+    setIsLoading(true);
+    const response = await GetUnitList(user?.token as string);
+    if (response.status === 200) {
+      setUnits(response.body);
+      setIsLoading(false);
+    } else {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -49,6 +81,8 @@ export default function ProductForm() {
               setDiscount(String(product.discount));
               setStock(String(product.stock));
               setImage(product.image);
+              setSelectedCategory(params.categoryId as string);
+              setSelectedUnit(params.unitId as string);
             }
           }
         } catch (err) {
@@ -60,6 +94,9 @@ export default function ProductForm() {
       }
     };
     fetchProduct();
+    fetchCategories();
+    fetchUnits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, params.id, user?.token]);
 
   const validateForm = () => {
@@ -83,6 +120,14 @@ export default function ProductForm() {
       Alert.alert("Validation Error", "Discount must be between 0 and 100");
       return false;
     }
+    if (!selectedUnit) {
+      Alert.alert("Validation Error", "Please select a unit");
+      return false;
+    }
+    if (!selectedCategory) {
+      Alert.alert("Validation Error", "Please select a category");
+      return false;
+    }
     return true;
   };
 
@@ -93,8 +138,8 @@ export default function ProductForm() {
     discount,
     stock,
     image,
-    unitId: "6953c707810733928e8012f4",
-    categoryId: "6953bb43c79267123859682f",
+    unitId: selectedUnit,
+    categoryId: selectedCategory,
   });
 
   const onSubmit = async () => {
@@ -103,24 +148,34 @@ export default function ProductForm() {
     try {
       setLoading(true);
       if (isEdit && params.id) {
-        await updateProductApi(
+        const response = await updateProductApi(
           String(params.id),
           payload,
           user?.token as string
         );
-        Alert.alert("Success", "Product updated successfully");
+        if (response?.status === 200) {
+          Alert.alert("Success", "Product updated successfully");
+          setRefresh(true);
+          router.push("/(tabs)/dashboard");
+        } else {
+          Alert.alert("Error", "Failed to add product");
+        }
       } else {
-        const response = await addProductApi(payload, user?.token as string);
-        if (response.status === 200) {
+        const response = await addProductApi(payload as Product, user?.token as string);
+        if (response?.status === 200) {
           Alert.alert("Success", "Product added successfully");
+          setRefresh(true);
+          router.push("/(tabs)/dashboard");
+        } else {
+          Alert.alert("Error", "Failed to add product");
         }
       }
-      router.back();
     } catch (error: any) {
       console.error(error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+      setRefresh(false);
     }
   };
 
@@ -170,6 +225,20 @@ export default function ProductForm() {
         value={discount}
         onChangeText={setDiscount}
       />
+      <View style={{ marginBottom: 6 }}>
+        <CategoryDropdown
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          style={styles.input}
+        />
+        <UnitDropdown
+          units={units}
+          selectedUnit={selectedUnit}
+          setSelectedUnit={setSelectedUnit}
+          style={styles.input}
+        />
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Stock"

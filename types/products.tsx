@@ -4,11 +4,11 @@ export interface Product {
   description?: string;
   image?: string;
   unitId?: string;
-  price?: number;
-  discount?: number;
+  price?: number | string;
+  discount?: number | string;
   visibility?: boolean;
   categoryId?: string;
-  stock?: number;
+  stock?: number | string;
 }
 
 export interface CartItemProps {

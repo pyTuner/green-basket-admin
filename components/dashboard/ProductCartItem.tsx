@@ -1,8 +1,9 @@
 import { ROLES } from "@/types/login";
 import { CartItemProps } from "@/types/products";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const ProductCartItem: React.FC<CartItemProps> = ({
   product,
@@ -14,8 +15,9 @@ const ProductCartItem: React.FC<CartItemProps> = ({
   deleteProduct,
 }) => {
   const discountedPrice =
-    (product?.price ?? 0) -
-    ((product?.price ?? 0) * (product?.discount ?? 0)) / 100;
+    ((product?.price ?? 0) as number) -
+    (((product?.price ?? 0) as number) * ((product?.discount ?? 0) as number)) /
+      100;
 
   const totalPrice = discountedPrice * quantity;
 
@@ -24,26 +26,32 @@ const ProductCartItem: React.FC<CartItemProps> = ({
       <Image source={{ uri: product.image }} style={styles.image} />
       <View style={styles.info}>
         <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            position: "absolute",
-            right: 0,
-            top: 0,
-          }}
+          style={styles.actionRow}
         >
-          <TouchableOpacity
-            onPress={editProduct}
-            style={{ cursor: "pointer", marginRight: 5 }}
-          >
-            <MaterialIcons name="edit" size={24} color="#2e7d32" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={deleteProduct} style={{ cursor: "pointer" }}>
-            <MaterialIcons name="delete" size={24} color="#d32f2f" />
-          </TouchableOpacity>
+          {editProduct && (
+            <TouchableOpacity
+              onPress={editProduct}
+              style={styles.actionBtn}
+            >
+              <MaterialIcons name="edit" size={20} color="#2e7d32" />
+            </TouchableOpacity>
+          )}
+          {deleteProduct && (
+            <TouchableOpacity
+              onPress={deleteProduct}
+              style={styles.actionBtn}
+            >
+              <MaterialIcons name="delete" size={20} color="#d32f2f" />
+            </TouchableOpacity>
+          )}
         </View>
         <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
+        <Text
+          accessibilityLabel={product.description}
+          style={styles.description}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
           {product.description}
         </Text>
         <View style={styles.priceRow}>
@@ -64,7 +72,7 @@ const ProductCartItem: React.FC<CartItemProps> = ({
             <TouchableOpacity
               style={styles.qtyBtn}
               onPress={onAdd}
-              disabled={quantity >= (product?.stock ?? 0)}
+              disabled={quantity >= ((product?.stock ?? 0) as number)}
             >
               <Text style={styles.qtyText}>+</Text>
             </TouchableOpacity>
@@ -95,6 +103,9 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 8,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   info: {
     flex: 1,
@@ -108,6 +119,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 12,
     color: "#777",
+    marginTop: 10,
   },
   priceRow: {
     flexDirection: "row",
@@ -161,5 +173,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     fontWeight: "600",
+  },
+  actionRow: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    zIndex: 1,
+  },
+  actionBtn: {
+    marginLeft: 8,
+    backgroundColor: "#eee",
+    borderRadius: 12,
+    padding: 5,
   },
 });

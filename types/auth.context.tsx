@@ -6,4 +6,6 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  refresh: boolean;
+  setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
 }

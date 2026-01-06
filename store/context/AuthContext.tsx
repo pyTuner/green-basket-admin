@@ -7,6 +7,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: React.PropsWithChildren<object>) {
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   const signIn = async ({
     token,
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: React.PropsWithChildren<object>) {
 
   return (
     <AuthContext.Provider
-      value={{ user, signIn, signOut, isLoading, setIsLoading }}
+      value={{ user, signIn, signOut, isLoading, setIsLoading, refresh, setRefresh }}
     >
       {children}
     </AuthContext.Provider>
