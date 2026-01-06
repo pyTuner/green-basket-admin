@@ -202,3 +202,27 @@ export const GetUnitList = async (token: string) => {
     }
   }
 };
+
+// Order Charge Sheet
+export const getOrderChargeSheetApi = async (token: string, slotType: string) => {
+  try {
+    const response = await axios.get(`${FINAL_BASE_URL}/order/slot/aggregation?slotType=${slotType}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+    } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+}

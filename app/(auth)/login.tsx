@@ -27,10 +27,10 @@ export default function Login() {
     if (response.status === 200) {
       signIn({ token, userId, role, name, primaryPhoneNumber });
       router.replace("/(tabs)/dashboard");
-          setIsLoading(false);
+      setIsLoading(false);
     } else {
       alert(response.message || "Login failed");
-          setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -50,8 +50,14 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.btn} onPress={onLogin}>
-        <Text style={{ color: "#fff" }}>{isLoading ? "Loading..." : "Login"}</Text>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={onLogin}
+        disabled={isLoading}
+      >
+        <Text style={{ color: "#fff" }}>
+          {isLoading ? "Loading..." : "Login"}
+        </Text>
       </TouchableOpacity>
       {/* <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
         <Text style={{ marginTop: 12, cursor: "pointer" }}>

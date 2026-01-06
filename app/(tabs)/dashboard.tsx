@@ -112,7 +112,7 @@ export default function Dashboard() {
             />
           ))
         ) : (
-          <Text>No Products Available</Text>
+          <Text style={styles.emptyProducts}>No Products Available</Text>
         )}
       </View>
     </ScrollView>
@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 6,
+    marginTop: -40,
   },
   role: {
     fontSize: 14,
@@ -153,9 +154,17 @@ const styles = StyleSheet.create({
   logoutBtn: {
     alignSelf: "flex-end",
     marginBottom: 16,
+    marginTop: 20,
+    zIndex: 1,
   },
   logoutText: {
     color: "#d32f2f",
     fontWeight: "600",
   },
+  emptyProducts: {
+    textAlign: "center",
+    marginTop: 50,
+    fontSize: 16,
+    color: "#777",
+  }
 });
