@@ -14,6 +14,10 @@ export const LoginApiAdmin = async (email: string, password: string) => {
     const response = await axios.post(`${FINAL_BASE_URL}/auth/admin/login`, {
       email,
       password,
+    }, {
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
     const finalResponse = await response.data;
     return finalResponse;

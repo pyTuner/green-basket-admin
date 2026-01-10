@@ -35,8 +35,8 @@ export default function Login() {
       } else {
         Alert.alert("Error", response.message || "Login failed");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      console.error("Login Error", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
