@@ -65,7 +65,6 @@ export const addProductApi = async (data: Product, token: string) => {
       },
     });
     const finalResponse = await response.data;
-    console.log(finalResponse);
     return finalResponse;
   } catch (error: any) {
     if (error.response) {
@@ -193,7 +192,6 @@ export const addCategoryApi = async (data: Product, token: string) => {
       },
     });
     const finalResponse = await response.data;
-    console.log(finalResponse);
     return finalResponse;
   } catch (error: any) {
     if (error.response) {
@@ -311,6 +309,105 @@ export const GetUnitList = async (token: string) => {
   }
 };
 
+// Add Unit API
+export const addUnitApi = async (data: Product, token: string) => {
+  try {
+    const response = await axios.post(`${FINAL_BASE_URL}/unit`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server error:", error.response.data);
+    } else if (error.request) {
+      console.log("Network error: request sent but no response");
+    } else {
+      console.log("Axios error:", error.message);
+    }
+    return null;
+  }
+};
+
+// Update Unit API
+export const updateUnitApi = async (id: string, data: any, token: string) => {
+  try {
+    const response = await axios.put(`${FINAL_BASE_URL}/unit/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Get Single Unit API
+export const getUnitApi = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${FINAL_BASE_URL}/unit/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Delete Single Unit API
+export const deleteUnitApi = async (id: string, token: string) => {
+  try {
+    const response = await axios.put(
+      `${FINAL_BASE_URL}/unit/delete/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
 // Order Charge Sheet
 export const getOrderChargeSheetApi = async (
   token: string,
@@ -319,6 +416,61 @@ export const getOrderChargeSheetApi = async (
   try {
     const response = await axios.get(
       `${FINAL_BASE_URL}/order/slot/aggregation?slotType=${slotType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Get User/Staff/Admin Details
+export const getDetailsAPI = async (token: string) => {
+  try {
+    const response = await axios.get(
+      `${FINAL_BASE_URL}/auth/user/details`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Update User Details Admin
+export const updateAdminDetailsAPI = async (payload: any, token: string) => {
+  try {
+    const response = await axios.put(
+      `${FINAL_BASE_URL}/auth/update/admin`,
+      payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,

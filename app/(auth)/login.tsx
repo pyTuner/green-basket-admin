@@ -3,6 +3,8 @@ import { useAuth } from "@/store/context/AuthContext";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -18,18 +20,25 @@ export default function Login() {
 
   const onLogin = async () => {
     if (!email || !password) {
-      alert("Please enter email and password");
+      Alert.alert("Error", "Please enter email and password");
       return;
     }
     setIsLoading(true);
-    const response = await LoginApiAdmin(email, password);
-    const { token, userId, role, name, primaryPhoneNumber } = response.body;
-    if (response.status === 200) {
-      signIn({ token, userId, role, name, primaryPhoneNumber });
-      router.replace("/(tabs)/dashboard");
-      setIsLoading(false);
-    } else {
-      alert(response.message || "Login failed");
+    try {
+      const response = await LoginApiAdmin(email, password);
+      if (response.status === 200) {
+        const { token, userId, role, name, primaryPhoneNumber } = response.body;
+        signIn({ token, userId, role, name, primaryPhoneNumber });
+        router.replace("/(tabs)/dashboard");
+      } else if (response.status === 409) {
+        Alert.alert("Error", response.message || "Login failed");
+      } else {
+        Alert.alert("Error", response.message || "Login failed");
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -56,7 +65,7 @@ export default function Login() {
         disabled={isLoading}
       >
         <Text style={{ color: "#fff" }}>
-          {isLoading ? "Loading..." : "Login"}
+          {isLoading ? <ActivityIndicator color="#fff" /> : "Login"}
         </Text>
       </TouchableOpacity>
       {/* <TouchableOpacity onPress={() => router.push("/(auth)/register")}>

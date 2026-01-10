@@ -1,23 +1,23 @@
 import {
-  addCategoryApi,
-  getCategoryApi,
-  updateCategoryApi,
+    addUnitApi,
+    getUnitApi,
+    updateUnitApi
 } from "@/api/axiosClient";
 import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
 } from "react-native";
 
-export default function CategoryForm() {
+export default function UnitForm() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user, signOut, setIsLoading, setRefresh } = useAuth();
@@ -30,19 +30,19 @@ export default function CategoryForm() {
       if (isEdit && params.id) {
         setLoading(true);
         try {
-          const response = await getCategoryApi(
+          const response = await getUnitApi(
             params.id as string,
             user?.token as string
           );
           if (response.status === 200) {
-            const category = response.body;
-            if (category) {
-              setName(category.name);
+            const product = response.body;
+            if (product) {
+              setName(product.name);
             }
           }
         } catch (err) {
           console.error(err);
-          Alert.alert("Error", "Failed to load catetory for editing.");
+          Alert.alert("Error", "Failed to load unit for editing.");
         } finally {
           setLoading(false);
         }
@@ -69,26 +69,26 @@ export default function CategoryForm() {
     try {
       setLoading(true);
       if (isEdit && params.id) {
-        const response = await updateCategoryApi(
+        const response = await updateUnitApi(
           String(params.id),
           payload,
           user?.token as string
         );
         if (response?.status === 200) {
-          Alert.alert("Success", "Category updated successfully");
+          Alert.alert("Success", "Unit updated successfully");
           setRefresh(true);
-          router.push("/(tabs)/category");
+          router.push("/(tabs)/unit");
         } else {
-          Alert.alert("Error", "Failed to add category");
+          Alert.alert("Error", "Failed to add unit");
         }
       } else {
-        const response = await addCategoryApi(payload, user?.token as string);
+        const response = await addUnitApi(payload, user?.token as string);
         if (response?.status === 200) {
-          Alert.alert("Success", "Category added successfully");
+          Alert.alert("Success", "Unit added successfully");
           setRefresh(true);
-          router.push("/(tabs)/category");
+          router.push("/(tabs)/unit");
         } else {
-          Alert.alert("Error", "Failed to add category");
+          Alert.alert("Error", "Failed to add unit");
         }
       }
     } catch (error: any) {
@@ -117,11 +117,11 @@ export default function CategoryForm() {
       <Text style={styles.welcome}>Welcome, {user?.name}</Text>
       <Text style={styles.role}>Mobile Number: {user?.primaryPhoneNumber}</Text>
       <Text style={styles.title}>
-        {isEdit ? "Edit Category" : "Add New Category"}
+        {isEdit ? "Edit Unit" : "Add New Unit"}
       </Text>
       <TextInput
         style={styles.input}
-        placeholder="Category Name"
+        placeholder="Unit Name"
         value={name}
         onChangeText={setName}
       />
@@ -134,7 +134,7 @@ export default function CategoryForm() {
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.btnText}>
-            {isEdit ? "Update Category" : "Add Category"}
+            {isEdit ? "Update Unit" : "Add Unit"}
           </Text>
         )}
       </TouchableOpacity>

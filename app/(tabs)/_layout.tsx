@@ -23,6 +23,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="unit"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="orders"
         options={{
           tabBarIcon: ({ color, size }) => (
