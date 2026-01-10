@@ -134,11 +134,15 @@ export const getProductApi = async (id: string, token: string) => {
 // Delete Single Product API
 export const deleteProductApi = async (id: string, token: string) => {
   try {
-    const response = await axios.put(`${FINAL_BASE_URL}/product/delete/${id}`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.put(
+      `${FINAL_BASE_URL}/product/delete/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     const finalResponse = await response.data;
     return finalResponse;
   } catch (error: any) {
@@ -163,6 +167,110 @@ export const GetCategoryList = async (token: string) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Add Category API
+export const addCategoryApi = async (data: Product, token: string) => {
+  try {
+    const response = await axios.post(`${FINAL_BASE_URL}/category`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const finalResponse = await response.data;
+    console.log(finalResponse);
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server error:", error.response.data);
+    } else if (error.request) {
+      console.log("Network error: request sent but no response");
+    } else {
+      console.log("Axios error:", error.message);
+    }
+    return null;
+  }
+};
+
+// Update Category API
+export const updateCategoryApi = async (
+  id: string,
+  data: any,
+  token: string
+) => {
+  try {
+    const response = await axios.put(`${FINAL_BASE_URL}/category/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Get Single Category API
+export const getCategoryApi = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${FINAL_BASE_URL}/category/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};
+
+// Delete Single Category API
+export const deleteCategoryApi = async (id: string, token: string) => {
+  try {
+    const response = await axios.put(
+      `${FINAL_BASE_URL}/category/delete/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     const finalResponse = await response.data;
     return finalResponse;
   } catch (error: any) {
@@ -204,16 +312,22 @@ export const GetUnitList = async (token: string) => {
 };
 
 // Order Charge Sheet
-export const getOrderChargeSheetApi = async (token: string, slotType: string) => {
+export const getOrderChargeSheetApi = async (
+  token: string,
+  slotType: string
+) => {
   try {
-    const response = await axios.get(`${FINAL_BASE_URL}/order/slot/aggregation?slotType=${slotType}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.get(
+      `${FINAL_BASE_URL}/order/slot/aggregation?slotType=${slotType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     const finalResponse = await response.data;
     return finalResponse;
-    } catch (error: any) {
+  } catch (error: any) {
     if (error.response) {
       console.log("Server responded with error:", error.response.data);
       return error.response.data;
@@ -225,4 +339,4 @@ export const getOrderChargeSheetApi = async (token: string, slotType: string) =>
       return error.message;
     }
   }
-}
+};

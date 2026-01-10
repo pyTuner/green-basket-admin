@@ -15,7 +15,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="bucket"
+        name="category"
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="basket" size={size} color={color} />
