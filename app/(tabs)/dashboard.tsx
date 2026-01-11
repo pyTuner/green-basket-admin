@@ -1,4 +1,8 @@
-import { deleteProductApi, GetProductList } from "@/api/axiosClient";
+import {
+  deleteProductApi,
+  GetCategoryList,
+  GetProductList,
+} from "@/api/axiosClient";
 import ProductCartItem from "@/components/dashboard/ProductCartItem";
 import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -18,6 +22,8 @@ export default function Dashboard() {
     useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoryId, setCategoryId] = useState<string>("");
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -28,12 +34,27 @@ export default function Dashboard() {
     }, 1000);
   };
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(
+    async (catType?: string) => {
+      setIsLoading(true);
+      try {
+        const response = await GetProductList(user?.token as string, catType);
+        if (response.status === 200) {
+          setProducts(response.body);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.token, setIsLoading]
+  );
+
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await GetProductList(user?.token as string);
+      const response = await GetCategoryList(user?.token as string);
       if (response.status === 200) {
-        setProducts(response.body);
+        setCategories([{ _id: "ALL", name: "ALL" }, ...response.body]);
       }
     } finally {
       setIsLoading(false);
@@ -55,11 +76,33 @@ export default function Dashboard() {
     }
   };
 
+  const handleSelectCategory = (id: string) => {
+    setCategoryId(id);
+    if (id === "ALL") {
+      fetchProducts();
+    } else {
+      fetchProducts(id);
+    }
+  };
+
   useEffect(() => {
-    if (!products.length || refresh) {
+    if ((!products.length || refresh) && categoryId) {
+      fetchProducts(categoryId).then(() => setRefresh(false));
+    } else if (!products.length || refresh) {
       fetchProducts().then(() => setRefresh(false));
     }
-  }, [refresh, fetchProducts, products.length, setRefresh]);
+    if (!categories.length || refresh) {
+      fetchCategories().then(() => setRefresh(false));
+    }
+  }, [
+    refresh,
+    fetchProducts,
+    products.length,
+    setRefresh,
+    categories.length,
+    fetchCategories,
+    categoryId
+  ]);
 
   if (!user || isLoading) {
     return (
@@ -85,6 +128,29 @@ export default function Dashboard() {
         >
           <Text style={{ color: "#fff" }}>New Product</Text>
         </TouchableOpacity>
+        {categories.length ? (
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryRow}
+          >
+            {categories.map((item) => (
+              <TouchableOpacity
+                key={item._id}
+                style={styles.categoryButton}
+                onPress={() => handleSelectCategory(item._id)}
+              >
+                <Text style={styles.buttonText}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <Text
+            style={{ ...styles.emptyProducts, marginBottom: 20, marginTop: 20 }}
+          >
+            No categories
+          </Text>
+        )}
         {products.length ? (
           products.map((product: any) => (
             <ProductCartItem
@@ -166,5 +232,32 @@ const styles = StyleSheet.create({
     marginTop: 50,
     fontSize: 16,
     color: "#777",
-  }
+  },
+  button: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+    marginVertical: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  categoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  categoryButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
 });

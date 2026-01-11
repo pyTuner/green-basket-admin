@@ -8,6 +8,7 @@ const items = [
   { label: "Category List", route: "/(tabs)/category" },
   { label: "Unit List", route: "/(tabs)/unit" },
   { label: "Update Details", route: "/(admin)/update-details" },
+  { label: "User Orders", route: "/(admin)/user-orders" },
 ];
 
 export default function More() {

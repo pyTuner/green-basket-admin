@@ -34,11 +34,13 @@ export default function Category() {
 
   const fetchCategories = async () => {
     setIsLoading(true);
-    const response = await GetCategoryList(user?.token as string);
-    if (response.status === 200) {
-      setCategories(response.body);
-      setIsLoading(false);
-    } else {
+    try {
+      const response = await GetCategoryList(user?.token as string);
+      if (response.status === 200) {
+        setCategories(response.body);
+        setIsLoading(false);
+      }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -46,7 +48,10 @@ export default function Category() {
   const deleteCategory = async (categoryId: string) => {
     setIsLoading(true);
     try {
-      const response = await deleteCategoryApi(categoryId, user?.token as string);
+      const response = await deleteCategoryApi(
+        categoryId,
+        user?.token as string
+      );
       if (response?.status === 200) {
         Alert.alert("Success", "Category deleted successfully");
         await fetchCategories();

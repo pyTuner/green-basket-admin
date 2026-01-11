@@ -2,7 +2,7 @@ import { Product } from "@/types/products";
 import axios from "axios";
 
 const BASE_URL = {
-  development: "http://192.168.1.5:5000/api",
+  development: "http://192.168.29.210:5000/api",
   production: "https://green-basket-backend-f9xm.onrender.com/api",
 };
 
@@ -36,9 +36,9 @@ export const LoginApiAdmin = async (email: string, password: string) => {
 };
 
 // Get Product List API
-export const GetProductList = async (token: string) => {
+export const GetProductList = async (token: string, catType = "ALL") => {
   try {
-    const response = await axios.get(`${FINAL_BASE_URL}/product`, {
+    const response = await axios.get(`${FINAL_BASE_URL}/product?catType=${catType}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -496,3 +496,30 @@ export const updateAdminDetailsAPI = async (payload: any, token: string) => {
     }
   }
 };
+
+// Get User with Orders
+export const getUserWithOrders = async (slotType: string, token: string) => {
+    try {
+    const response = await axios.get(
+      `${FINAL_BASE_URL}/auth/orders?slotType=${slotType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+}

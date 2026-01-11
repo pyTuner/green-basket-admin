@@ -62,7 +62,7 @@ export default function Orders() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.label}>Select a programming language:</Text>
+      <Text style={styles.label}>Select a Slot Type:</Text>
       <View style={{ ...styles.dropdownContainer, padding: 0 }}>
         <Picker
           selectedValue={slotType}
