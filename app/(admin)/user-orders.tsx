@@ -1,8 +1,16 @@
-import { getUserWithOrders } from "@/api/axiosClient";
+import { getUserWithOrders, updateOrderDetails } from "@/api/axiosClient";
 import { useAuth } from "@/store/context/AuthContext";
 import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useState } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const UserOrdersScreen = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -16,6 +24,36 @@ const UserOrdersScreen = () => {
       if (response.status === 200) {
         setUsers(response.body?.users);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (userId: string, orders: any) => {
+    const payload = {
+      userId,
+      orders,
+    };
+    try {
+      setIsLoading(true);
+      const response = await updateOrderDetails(payload, user?.token as string);
+      if (response.status === 200) {
+        await fetchOrders();
+        Alert.alert(
+          "Success",
+          response?.message || "Details updated successfully"
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          response?.message || "Details not updated successfully"
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error?.message || "Details not updated successfully"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +116,6 @@ const UserOrdersScreen = () => {
       <Text style={styles.userDetail}>Email: {item.email}</Text>
       <Text style={styles.userDetail}>Phone: {item.primaryPhoneNumber}</Text>
       <Text style={styles.userDetail}>Address: {item.primaryAddress}</Text>
-
       {item.orders.length ? (
         <FlatList
           data={item.orders}
@@ -88,6 +125,25 @@ const UserOrdersScreen = () => {
         />
       ) : (
         <Text style={styles.noOrders}>No Orders</Text>
+      )}
+      {!!item.totalOrderAmount && (
+        <View style={styles.cardBottom}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              item.orders.some((ele: any) => ele.orderStatus === "DELIVERED") && styles.buttonDisabled,
+            ]}
+            onPress={() => updateOrderStatus(item._id, item.orders)}
+            disabled={item.orders.some((ele: any) => ele.orderStatus === "DELIVERED")}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>
+              Comfirm Order Delivered
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.productTotal}>
+            Total: ₹ {+item.totalOrderAmount.toFixed(2)}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -229,6 +285,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     height: "100%",
+  },
+  button: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  buttonDisabled: {
+    backgroundColor: "#ccc",
+    opacity: 0.6,
+  },
+  cardBottom: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    flexDirection: "row",
+    marginTop: 10,
   },
 });
 

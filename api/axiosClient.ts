@@ -11,14 +11,18 @@ const FINAL_BASE_URL = BASE_URL["production"];
 // Admin Login API
 export const LoginApiAdmin = async (email: string, password: string) => {
   try {
-    const response = await axios.post(`${FINAL_BASE_URL}/auth/admin/login`, {
-      email,
-      password,
-    }, {
-      headers: {
-        "Content-Type": "application/json"
+    const response = await axios.post(
+      `${FINAL_BASE_URL}/auth/admin/login`,
+      {
+        email,
+        password,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
     const finalResponse = await response.data;
     return finalResponse;
   } catch (error: any) {
@@ -38,11 +42,14 @@ export const LoginApiAdmin = async (email: string, password: string) => {
 // Get Product List API
 export const GetProductList = async (token: string, catType = "ALL") => {
   try {
-    const response = await axios.get(`${FINAL_BASE_URL}/product?catType=${catType}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.get(
+      `${FINAL_BASE_URL}/product?catType=${catType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     const finalResponse = await response.data;
     return finalResponse;
   } catch (error: any) {
@@ -445,14 +452,11 @@ export const getOrderChargeSheetApi = async (
 // Get User/Staff/Admin Details
 export const getDetailsAPI = async (token: string) => {
   try {
-    const response = await axios.get(
-      `${FINAL_BASE_URL}/auth/user/details`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.get(`${FINAL_BASE_URL}/auth/user/details`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const finalResponse = await response.data;
     return finalResponse;
   } catch (error: any) {
@@ -499,7 +503,7 @@ export const updateAdminDetailsAPI = async (payload: any, token: string) => {
 
 // Get User with Orders
 export const getUserWithOrders = async (slotType: string, token: string) => {
-    try {
+  try {
     const response = await axios.get(
       `${FINAL_BASE_URL}/auth/orders?slotType=${slotType}`,
       {
@@ -522,4 +526,32 @@ export const getUserWithOrders = async (slotType: string, token: string) => {
       return error.message;
     }
   }
-}
+};
+
+// Update order status after delivered
+export const updateOrderDetails = async (payload: any, token: string) => {
+  try {
+    const response = await axios.put(
+      `${FINAL_BASE_URL}/auth/order-status/update`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const finalResponse = await response.data;
+    return finalResponse;
+  } catch (error: any) {
+    if (error.response) {
+      console.log("Server responded with error:", error.response.data);
+      return error.response.data;
+    } else if (error.request) {
+      console.log("No response received from server");
+      return error.request;
+    } else {
+      console.log("Axios error:", error.message);
+      return error.message;
+    }
+  }
+};

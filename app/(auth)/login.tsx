@@ -23,8 +23,8 @@ export default function Login() {
       Alert.alert("Error", "Please enter email and password");
       return;
     }
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const response = await LoginApiAdmin(email, password);
       if (response.status === 200) {
         const { token, userId, role, name, primaryPhoneNumber } = response.body;
