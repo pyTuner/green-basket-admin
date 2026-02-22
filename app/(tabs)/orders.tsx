@@ -1,8 +1,14 @@
-import { getOrderChargeSheetApi } from "@/api/axiosClient";
+import { downloadChargeSheet, getOrderChargeSheetApi } from "@/api/axiosClient";
 import { useAuth } from "@/store/context/AuthContext";
-import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function Orders() {
   const { user, isLoading, setIsLoading } = useAuth();
@@ -14,10 +20,38 @@ export default function Orders() {
     try {
       const response = await getOrderChargeSheetApi(
         user?.token as string,
-        slotType
+        slotType,
       );
       if (response.status === 200) {
         setChargeSheetData(response.body);
+      } else {
+        setChargeSheetData([]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const downloadFile = async () => {
+    setIsLoading(true);
+    try {
+      // const response = await downloadChartSheet(
+      //   slotType,
+      //   user?.token as string,
+      // );
+      // if (response.success) {
+      //   console.log("Downloaded at", response.fileUri);
+      // } else {
+      //   console.log("Download failed", response.error);
+      // }
+      const result = await downloadChargeSheet({
+        slotType,
+        token: user?.token as string,
+        showAlert: true,
+      });
+
+      if (result.success) {
+        console.log("File saved at:", result.fileUri);
       }
     } finally {
       setIsLoading(false);
@@ -62,8 +96,8 @@ export default function Orders() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.label}>Select a Slot Type:</Text>
-      <View style={{ ...styles.dropdownContainer, padding: 0 }}>
+      {/* <Text style={styles.label}>Select a Slot Type:</Text> */}
+      {/* <View style={{ ...styles.dropdownContainer, padding: 0 }}>
         <Picker
           selectedValue={slotType}
           style={styles.picker}
@@ -72,17 +106,25 @@ export default function Orders() {
           <Picker.Item label="Wednesday" value="WED" />
           <Picker.Item label="Saturday" value="SAT" />
         </Picker>
-      </View>
-      {
-        chargeSheetData ?
+      </View> */}
+      {chargeSheetData ? (
         <>
           <Text style={styles.header}>
-            Charge Sheet - {chargeSheetData.slotType}
+            {/* Charge Sheet - {chargeSheetData.slotType} */}
+            Charge Sheet
           </Text>
           <Text style={styles.dateRange}>
             {new Date(chargeSheetData.dateRange.startDate).toLocaleDateString()}{" "}
             - {new Date(chargeSheetData.dateRange.endDate).toLocaleDateString()}
           </Text>
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              onPress={downloadFile}
+              style={styles.downloadButton}
+            >
+              <Text style={styles.downloadButtonText}>Download</Text>
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={chargeSheetData.data}
             keyExtractor={(item) => item._id}
@@ -93,11 +135,11 @@ export default function Orders() {
             <Text style={styles.totalText}>Total Amount: ₹{totalAmount}</Text>
           </View>
         </>
-        :
+      ) : (
         <View style={styles.exptyContainer}>
           <Text>No data available for the selected slot.</Text>
         </View>
-      }
+      )}
     </SafeAreaView>
   );
 }
@@ -119,6 +161,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 4,
+    marginTop: 30,
   },
   dateRange: {
     fontSize: 14,
@@ -204,5 +247,23 @@ const styles = StyleSheet.create({
   selectedText: {
     marginTop: 20,
     fontSize: 16,
+  },
+  topBar: {
+    position: "absolute",
+    top: 50,
+    right: 16,
+    zIndex: 10,
+  },
+  downloadButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    elevation: 3,
+  },
+  downloadButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
