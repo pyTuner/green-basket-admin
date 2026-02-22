@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "green-basket-admin",
-    "slug": "green-basket-admin",
+    "name": "Chhava Vegetables Admin",
+    "slug": "chhava-vegetables-admin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.greenbasketadmin"
+      "package": "com.mernsolutions.chhavavegetablesadmin"
     },
     "web": {
       "output": "static",
