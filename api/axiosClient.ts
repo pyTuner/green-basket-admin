@@ -1,6 +1,7 @@
 import { Product } from "@/types/products";
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { Directory, File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 
 const BASE_URL = {
@@ -580,89 +581,85 @@ export const downloadChargeSheet = async ({
   fileName: customFileName,
 }: DownloadOptions): Promise<DownloadResponse> => {
   try {
-    const response = await axios({
-      method: 'GET',
-      url: `${FINAL_BASE_URL}/order/slot/download`,
-      params: { slotType },
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-      timeout: 30000,
-    });
-
-    if (response.status === 403) throw new Error('Admin access required');
-    if (response.status === 404) throw new Error('No data found for the selected slot');
-    if (response.status >= 400) throw new Error(`Server error: ${response.status}`);
+    const response = await axios.get(
+      `${FINAL_BASE_URL}/order/slot/download`,
+      {
+        params: { slotType },
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     if (!response.data?.body?.data) {
       throw new Error('Invalid response from server');
     }
-    const { fileName: serverFileName, data: base64Data } = response.data.body;
-    const fileName = customFileName || serverFileName || `charge-sheet-${slotType}-${Date.now()}.pdf`;
-    const pdfsDir = new Directory(Paths.document, 'pdfs');
-    if (!pdfsDir.exists) {
-      pdfsDir.create();
+
+    const {
+      fileName: serverFileName,
+      data: base64Data,
+    } = response.data.body;
+
+    const finalFileName =
+      customFileName ||
+      serverFileName ||
+      `charge-sheet-${slotType}-${Date.now()}.pdf`;
+
+    // 📁 Create directory inside documents
+    const pdfDir = new Directory(Paths.document, 'pdfs');
+    if (!pdfDir.exists) {
+      pdfDir.create();
     }
-    const file = new File(pdfsDir, fileName);
+
+    // 📄 Create file
+    const file = new File(pdfDir, finalFileName);
+
     if (file.exists) {
       file.delete();
     }
+
     file.create();
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    file.write(byteArray);
 
-    if (showAlert) {
-      Alert.alert(
-        'Success',
-        'PDF downloaded successfully!',
-        [{ text: 'OK' }]
-      );
-    }
-    console.log(file);
-    return { 
-      success: true, 
-      fileUri: file.uri,
-      message: 'PDF downloaded successfully'
-    };
+    file.write(base64Data.replace(/\s/g, ''), {
+      encoding: 'base64',
+    });
 
+    // 📱 Share / Preview
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(file.uri);
+    } else {
+      Alert.alert('Saved', `PDF saved to:\n${file.uri}`);
+    }
+
+    return { success: true, fileUri: file.uri };
   } catch (error: any) {
-    return handleDownloadError(error, showAlert);
+    Alert.alert('Download Failed', error.message);
+    return { success: false, error };
   }
 };
 
-const handleDownloadError = (error: any, showAlert: boolean): DownloadResponse => {
+
+
+const handleDownloadError = (
+  error: any,
+  showAlert: boolean
+): DownloadResponse => {
   let errorMessage = 'Failed to download PDF';
 
-  console.error('❌ Download error:', {
-    message: error.message,
-    code: error.code,
-    status: error.response?.status,
-  });
-
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError;
-    
-    if (axiosError.code === 'ECONNABORTED') {
+    if (error.code === 'ECONNABORTED') {
       errorMessage = 'Request timed out. Please try again';
-    } else if (axiosError.code === 'ERR_NETWORK') {
-      errorMessage = 'Network error. Please check your connection and server';
-    } else if (axiosError.response?.status === 403) {
-      errorMessage = 'You do not have permission to download this file';
-    } else if (axiosError.response?.status === 404) {
-      errorMessage = 'No data found for the selected slot';
+    } else if (error.code === 'ERR_NETWORK') {
+      errorMessage = 'Network error. Please check your connection';
+    } else if (error.response?.status === 403) {
+      errorMessage = 'You do not have permission';
+    } else if (error.response?.status === 404) {
+      errorMessage = 'No data found';
     }
   } else if (error instanceof Error) {
     errorMessage = error.message;
   }
 
   if (showAlert) {
-    Alert.alert('Download Failed', errorMessage, [{ text: 'OK' }]);
+    Alert.alert('Download Failed', errorMessage);
   }
 
   return { success: false, error, message: errorMessage };
