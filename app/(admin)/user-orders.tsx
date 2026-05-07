@@ -1,31 +1,44 @@
 import { getUserWithOrders, updateOrderDetails } from "@/api/axiosClient";
-import { useAuth } from "@/store/context/AuthContext";
-import { Picker } from "@react-native-picker/picker";
+import { setIsLoading } from "@/store/redux/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
-const UserOrdersScreen = () => {
+export default function UserOrdersScreen() {
   const [users, setUsers] = useState<any[]>([]);
   const [slotType, setSlotType] = useState<string>("WED");
-  const { user, isLoading, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+
+  const setLoadingState = (val: boolean) => dispatch(setIsLoading(val));
 
   const fetchOrders = async () => {
-    setIsLoading(true);
+    setLoadingState(true);
     try {
       const response = await getUserWithOrders(slotType, user?.token as string);
       if (response.status === 200) {
-        setUsers(response.body?.users);
+        console.log("Fetched users with orders:", response.body?.users);
+        const filteredOrders = (response.body?.users ?? []).filter(
+          (user: any) => user.orders && user.orders.length > 0
+        );
+        console.log('Filtered users with orders:', filteredOrders);
+        setUsers(filteredOrders ?? []);
+      } else {
+        setUsers([]);
       }
+    } catch (error) {
+      console.log("Failed to fetch users with orders:", error);
+      setUsers([]);
     } finally {
-      setIsLoading(false);
+      setLoadingState(false);
     }
   };
 
@@ -35,7 +48,7 @@ const UserOrdersScreen = () => {
       orders,
     };
     try {
-      setIsLoading(true);
+      setLoadingState(true);
       const response = await updateOrderDetails(payload, user?.token as string);
       if (response.status === 200) {
         await fetchOrders();
@@ -55,14 +68,14 @@ const UserOrdersScreen = () => {
         error?.message || "Details not updated successfully"
       );
     } finally {
-      setIsLoading(false);
+      setLoadingState(false);
     }
   };
 
   useEffect(() => {
     fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.token, setIsLoading, slotType]);
+  }, [user?.token, slotType]);
 
   if (isLoading) {
     return (
@@ -82,7 +95,7 @@ const UserOrdersScreen = () => {
         Price: ₹{item.price} | Discount: {item.discount}%
       </Text>
       <Text style={styles.productTotal}>
-        Total: ₹{item.totalPrice.toFixed(2)}
+        Total: ₹{Number(item.totalPrice ?? 0).toFixed(2)}
       </Text>
     </View>
   );
@@ -92,11 +105,11 @@ const UserOrdersScreen = () => {
       <View style={styles.orderHeader}>
         <Text style={styles.orderTitle}>Order Status: {item.orderStatus}</Text>
         <Text style={styles.orderDate}>
-          {new Date(item.createdAt).toLocaleString()}
+          {item.createdAt ? new Date(item.createdAt).toLocaleString() : "-"}
         </Text>
       </View>
       <FlatList
-        data={item.productList}
+        data={item.productList ?? []}
         renderItem={renderProduct}
         keyExtractor={(product, index) => index.toString()}
         scrollEnabled={false}
@@ -104,54 +117,73 @@ const UserOrdersScreen = () => {
     </View>
   );
 
-  const renderUser = ({ item, index }: any) => (
-    <View
-      key={item._id}
-      style={[
-        styles.userContainer,
-        index === users.length - 1 && { marginBottom: 50 }, // last item
-      ]}
-    >
-      <Text style={styles.userName}>{item.name}</Text>
-      <Text style={styles.userDetail}>Email: {item.email}</Text>
-      <Text style={styles.userDetail}>Phone: {item.primaryPhoneNumber}</Text>
-      <Text style={styles.userDetail}>Address: {item.primaryAddress}</Text>
-      {item.orders.length ? (
-        <FlatList
-          data={item.orders}
-          renderItem={renderOrder}
-          keyExtractor={(order) => order._id}
-          scrollEnabled={false}
-        />
-      ) : (
-        <Text style={styles.noOrders}>No Orders</Text>
-      )}
-      {!!item.totalOrderAmount && (
-        <View style={styles.cardBottom}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              item.orders.some((ele: any) => ele.orderStatus === "DELIVERED") && styles.buttonDisabled,
-            ]}
-            onPress={() => updateOrderStatus(item._id, item.orders)}
-            disabled={item.orders.some((ele: any) => ele.orderStatus === "DELIVERED")}
-          >
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>
-              Comfirm Order Delivered
+  const renderUser = ({ item, index }: any) => {
+    const orders = item.orders ?? [];
+    const hasDeliveredOrder = orders.some(
+      (ele: any) => ele.orderStatus === "DELIVERED"
+    );
+
+    return (
+      <View
+        key={item._id}
+        style={[
+          styles.userContainer,
+          index === users.length - 1 && { marginBottom: 50 }, // last item
+        ]}
+      >
+        <Text style={styles.userName}>{item.name}</Text>
+        <Text style={styles.userDetail}>Email: {item.email}</Text>
+        <Text style={styles.userDetail}>Phone: {item.primaryPhoneNumber}</Text>
+        <Text style={styles.userDetail}>Address: {item.primaryAddress}</Text>
+        {orders.length ? (
+          <FlatList
+            data={orders}
+            renderItem={renderOrder}
+            keyExtractor={(order) => order._id}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.noOrders}>No Orders</Text>
+        )}
+        {!!item.totalOrderAmount && (
+          <View style={styles.cardBottom}>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                hasDeliveredOrder && styles.buttonDisabled,
+              ]}
+              onPress={() => updateOrderStatus(item._id, orders)}
+              disabled={hasDeliveredOrder}
+            >
+              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>
+                Comfirm Order Delivered
+              </Text>
+            </TouchableOpacity>
+            {/* <TouchableOpacity
+              style={[
+                styles.button,
+                hasDeliveredOrder && styles.buttonDisabled,
+              ]}
+              onPress={() => updateOrderStatus(item._id, orders)}
+              disabled={hasDeliveredOrder}
+            >
+              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>
+               View Order
+              </Text>
+            </TouchableOpacity> */}
+            <Text style={styles.productTotal}>
+              Total: ₹ {Number(item.totalOrderAmount ?? 0).toFixed(2)}
             </Text>
-          </TouchableOpacity>
-          <Text style={styles.productTotal}>
-            Total: ₹ {+item.totalOrderAmount.toFixed(2)}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.screenTitle}>User Orders</Text>
-      <Text style={styles.label}>Select a Slot Type:</Text>
+      {/* <Text style={styles.label}>Select a Slot Type:</Text>
       <View style={{ ...styles.dropdownContainer, padding: 0 }}>
         <Picker
           selectedValue={slotType}
@@ -161,16 +193,15 @@ const UserOrdersScreen = () => {
           <Picker.Item label="Wednesday" value="WED" />
           <Picker.Item label="Saturday" value="SAT" />
         </Picker>
-      </View>
+      </View> */}
       <FlatList
         data={users}
         renderItem={renderUser}
         keyExtractor={(user) => user._id}
-        scrollEnabled={false}
       />
-    </ScrollView>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -307,5 +338,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-export default UserOrdersScreen;

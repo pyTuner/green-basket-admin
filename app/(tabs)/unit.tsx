@@ -1,6 +1,5 @@
 import { deleteUnitApi, GetUnitList } from "@/api/axiosClient";
 import CategoryItem from "@/components/category/CategoryItem";
-import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -13,33 +12,39 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { clearUser, setIsLoading } from "@/store/redux/authSlice";
 
 const { height } = Dimensions.get("window");
 
 const reducedHeight = height - 270;
 
 export default function Unit() {
-  const { user, signOut, isLoading, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const router = useRouter();
   const [units, setUnits] = useState<any[]>([]);
 
+  const setLoading = (val: boolean) => dispatch(setIsLoading(val));
+
   const handleLogout = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setTimeout(async () => {
-      await signOut();
+      dispatch(clearUser());
       router.replace("/(auth)/login");
-      setIsLoading(false);
+      setLoading(false);
     }, 1000);
   };
 
   const fetchUnits = async () => {
-    setIsLoading(true);
+    setLoading(true);
     const response = await GetUnitList(user?.token as string);
     if (response.status === 200) {
       setUnits(response.body);
-      setIsLoading(false);
+      setLoading(false);
     } else {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 

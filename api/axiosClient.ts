@@ -507,7 +507,7 @@ export const updateAdminDetailsAPI = async (payload: any, token: string) => {
 export const getUserWithOrders = async (slotType: string, token: string) => {
   try {
     const response = await axios.get(
-      `${FINAL_BASE_URL}/auth/orders?slotType=${slotType}`,
+      `${FINAL_BASE_URL}/auth/orders`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

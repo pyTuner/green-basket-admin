@@ -1,5 +1,4 @@
 import { getDetailsAPI, updateAdminDetailsAPI } from "@/api/axiosClient";
-import { useAuth } from "@/store/context/AuthContext";
 import { IUser } from "@/types/login";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -13,10 +12,15 @@ import {
     TextInput,
     TouchableOpacity,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { clearUser, setIsLoading, setRefresh, setUser } from "@/store/redux/authSlice";
 
 export default function UserDetailsForm() {
   const router = useRouter();
-  const { user, signOut, setIsLoading, setRefresh, signIn } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const setLoadingState = (val: boolean) => dispatch(setIsLoading(val));
+  const setRefreshState = (val: boolean) => dispatch(setRefresh(val));
   const [loading, setLoading] = useState<boolean>(false);
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -91,14 +95,16 @@ export default function UserDetailsForm() {
       );
       if (response?.status === 200) {
         Alert.alert("Success", "User details updated successfully");
-        setRefresh(true);
-        signIn({
-          token: user?.token,
-          userId: user?.userId,
-          role: user?.role,
-          name,
-          primaryPhoneNumber,
-        } as IUser);
+        setRefreshState(true);
+        dispatch(
+          setUser({
+            token: user?.token as string,
+            userId: user?.userId as string,
+            role: user?.role as string,
+            name,
+            primaryPhoneNumber,
+          } as IUser)
+        );
       } else {
         Alert.alert("Error", "Failed to add category");
       }
@@ -107,16 +113,16 @@ export default function UserDetailsForm() {
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
-      setRefresh(false);
+      setRefreshState(false);
     }
   };
 
   const handleLogout = async () => {
-    setIsLoading(true);
+    setLoadingState(true);
     setTimeout(async () => {
-      await signOut();
+      dispatch(clearUser());
       router.replace("/(auth)/login");
-      setIsLoading(false);
+      setLoadingState(false);
     }, 1000);
   };
 

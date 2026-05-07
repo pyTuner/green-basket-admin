@@ -1,6 +1,5 @@
 import { LoginApiAdmin } from "@/api/axiosClient";
-import { useAuth } from "@/store/context/AuthContext";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,12 +10,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { setIsLoading, setUser } from "@/store/redux/authSlice";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { signIn, isLoading, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+
+  const setLoading = (val: boolean) => dispatch(setIsLoading(val));
+
+  if (user) {
+    return <Redirect href="/(tabs)/dashboard" />;
+  }
 
   const onLogin = async () => {
     if (!email || !password) {
@@ -24,11 +33,19 @@ export default function Login() {
       return;
     }
     try {
-      setIsLoading(true);
+      setLoading(true);
       const response = await LoginApiAdmin(email, password);
       if (response.status === 200) {
         const { token, userId, role, name, primaryPhoneNumber } = response.body;
-        signIn({ token, userId, role, name, primaryPhoneNumber });
+        dispatch(
+          setUser({
+            token,
+            userId,
+            role,
+            name,
+            primaryPhoneNumber,
+          })
+        );
         router.replace("/(tabs)/dashboard");
       } else if (response.status === 409) {
         Alert.alert("Error", response.message || "Login failed");
@@ -39,7 +56,7 @@ export default function Login() {
       console.error("Login Error", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 

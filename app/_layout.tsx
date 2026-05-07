@@ -1,14 +1,14 @@
-import { AuthProvider } from "@/store/context/AuthContext";
 import { Stack } from "expo-router";
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ReduxProvider } from "@/store/redux/ReduxProvider";
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
+      <ReduxProvider>
         <Stack screenOptions={{ headerShown: false }} />
-      </AuthProvider>
+      </ReduxProvider>
     </SafeAreaProvider>
   );
 }

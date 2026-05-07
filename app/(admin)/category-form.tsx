@@ -3,7 +3,6 @@ import {
   getCategoryApi,
   updateCategoryApi,
 } from "@/api/axiosClient";
-import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -16,14 +15,19 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { clearUser, setIsLoading, setRefresh } from "@/store/redux/authSlice";
 
 export default function CategoryForm() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { user, signOut, setIsLoading, setRefresh } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const isEdit = !!params?.id;
   const [name, setName] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
+  const setLoadingState = (val: boolean) => dispatch(setIsLoading(val));
+  const setRefreshState = (val: boolean) => dispatch(setRefresh(val));
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -76,7 +80,7 @@ export default function CategoryForm() {
         );
         if (response?.status === 200) {
           Alert.alert("Success", "Category updated successfully");
-          setRefresh(true);
+          setRefreshState(true);
           router.push("/(tabs)/category");
         } else {
           Alert.alert("Error", "Failed to add category");
@@ -85,7 +89,7 @@ export default function CategoryForm() {
         const response = await addCategoryApi(payload, user?.token as string);
         if (response?.status === 200) {
           Alert.alert("Success", "Category added successfully");
-          setRefresh(true);
+          setRefreshState(true);
           router.push("/(tabs)/category");
         } else {
           Alert.alert("Error", "Failed to add category");
@@ -96,16 +100,16 @@ export default function CategoryForm() {
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
-      setRefresh(false);
+      setRefreshState(false);
     }
   };
 
   const handleLogout = async () => {
-    setIsLoading(true);
+    setLoadingState(true);
     setTimeout(async () => {
-      await signOut();
+      dispatch(clearUser());
       router.replace("/(auth)/login");
-      setIsLoading(false);
+      setLoadingState(false);
     }, 1000);
   };
 

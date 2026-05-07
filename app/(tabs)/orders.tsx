@@ -1,22 +1,27 @@
 import { downloadChargeSheet, getOrderChargeSheetApi } from "@/api/axiosClient";
-import { useAuth } from "@/store/context/AuthContext";
+import { setIsLoading } from "@/store/redux/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Orders() {
-  const { user, isLoading, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const [chargeSheetData, setChargeSheetData] = React.useState<any>(null);
   const [slotType, setSlotType] = useState("WED");
 
+  const setLoading = (val: boolean) => dispatch(setIsLoading(val));
+
   const getOrderChargeSheet = async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const response = await getOrderChargeSheetApi(
         user?.token as string,
@@ -28,12 +33,12 @@ export default function Orders() {
         setChargeSheetData([]);
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const downloadFile = async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       // const response = await downloadChartSheet(
       //   slotType,
@@ -54,7 +59,7 @@ export default function Orders() {
         console.log("File saved at:", result.fileUri);
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -65,7 +70,7 @@ export default function Orders() {
   useEffect(() => {
     getOrderChargeSheet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.token, setIsLoading, slotType]);
+  }, [user?.token, slotType]);
 
   if (isLoading || !chargeSheetData) {
     return (

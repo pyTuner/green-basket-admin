@@ -1,6 +1,5 @@
 import { deleteCategoryApi, GetCategoryList } from "@/api/axiosClient";
 import CategoryItem from "@/components/category/CategoryItem";
-import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -13,40 +12,46 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { clearUser, setIsLoading } from "@/store/redux/authSlice";
 
 const { height } = Dimensions.get("window");
 
 const reducedHeight = height - 270;
 
 export default function Category() {
-  const { user, signOut, isLoading, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const router = useRouter();
   const [categories, setCategories] = useState<any[]>([]);
 
+  const setLoading = (val: boolean) => dispatch(setIsLoading(val));
+
   const handleLogout = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setTimeout(async () => {
-      await signOut();
+      dispatch(clearUser());
       router.replace("/(auth)/login");
-      setIsLoading(false);
+      setLoading(false);
     }, 1000);
   };
 
   const fetchCategories = async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const response = await GetCategoryList(user?.token as string);
       if (response.status === 200) {
         setCategories(response.body);
-        setIsLoading(false);
+        setLoading(false);
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const deleteCategory = async (categoryId: string) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const response = await deleteCategoryApi(
         categoryId,
@@ -59,7 +64,7 @@ export default function Category() {
         Alert.alert("Error", "Failed to delete category");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 

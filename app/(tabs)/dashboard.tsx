@@ -4,7 +4,6 @@ import {
   GetProductList,
 } from "@/api/axiosClient";
 import ProductCartItem from "@/components/dashboard/ProductCartItem";
-import { useAuth } from "@/store/context/AuthContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -16,53 +15,66 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { clearUser, setIsLoading, setRefresh } from "@/store/redux/authSlice";
 
 export default function Dashboard() {
-  const { user, signOut, isLoading, setIsLoading, refresh, setRefresh } =
-    useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const refresh = useAppSelector((state) => state.auth.refresh);
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
 
+  const setLoading = useCallback(
+    (val: boolean) => dispatch(setIsLoading(val)),
+    [dispatch]
+  );
+  const setRefreshState = useCallback(
+    (val: boolean) => dispatch(setRefresh(val)),
+    [dispatch]
+  );
+
   const handleLogout = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setTimeout(async () => {
-      await signOut();
+      dispatch(clearUser());
       router.replace("/(auth)/login");
-      setIsLoading(false);
+      setLoading(false);
     }, 1000);
   };
 
   const fetchProducts = useCallback(
     async (catType?: string) => {
-      setIsLoading(true);
+      setLoading(true);
       try {
         const response = await GetProductList(user?.token as string, catType);
         if (response.status === 200) {
           setProducts(response.body);
         }
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     },
-    [user?.token, setIsLoading]
+    [user?.token, setLoading]
   );
 
   const fetchCategories = useCallback(async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const response = await GetCategoryList(user?.token as string);
       if (response.status === 200) {
         setCategories([{ _id: "ALL", name: "ALL" }, ...response.body]);
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [user?.token, setIsLoading]);
+  }, [user?.token, setLoading]);
 
   const deleteProduct = async (productId: string) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const response = await deleteProductApi(productId, user?.token as string);
       if (response?.status === 200) {
@@ -72,7 +84,7 @@ export default function Dashboard() {
         Alert.alert("Error", "Failed to delete product");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -87,21 +99,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     if ((!products.length || refresh) && categoryId) {
-      fetchProducts(categoryId).then(() => setRefresh(false));
+      fetchProducts(categoryId).then(() => setRefreshState(false));
     } else if (!products.length || refresh) {
-      fetchProducts().then(() => setRefresh(false));
+      fetchProducts().then(() => setRefreshState(false));
     }
     if (!categories.length || refresh) {
-      fetchCategories().then(() => setRefresh(false));
+      fetchCategories().then(() => setRefreshState(false));
     }
   }, [
     refresh,
     fetchProducts,
     products.length,
-    setRefresh,
     categories.length,
     fetchCategories,
-    categoryId
+    categoryId,
+    setRefreshState,
   ]);
 
   if (!user || isLoading) {
