@@ -1,7 +1,8 @@
-const PRODUCTION = 'https://green-basket-backend-f9xm.onrender.com'
 
 
-export const BASE_URL = PRODUCTION;
+const production_url = process.env.EXPO_PUBLIC_PRODUCTION;
+const local_url = process.env.EXPO_PUBLIC_LOCAL
+export const BASE_URL = production_url
 
 
 // toggle developer mode to use easy sign in

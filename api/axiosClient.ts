@@ -1,14 +1,11 @@
 import { Product } from "@/types/products";
+import { BASE_URL } from "@/utils/constants";
 import axios, { AxiosError } from 'axios';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Alert } from 'react-native';
 
-const BASE_URL = {
-  development: "http://192.168.29.210:5000/api",
-  production: "https://green-basket-backend-f9xm.onrender.com/api",
-};
 
-const FINAL_BASE_URL = BASE_URL["production"];
+const FINAL_BASE_URL = BASE_URL
 
 // Admin Login API
 export const LoginApiAdmin = async (email: string, password: string) => {
@@ -503,11 +500,36 @@ export const updateAdminDetailsAPI = async (payload: any, token: string) => {
   }
 };
 
+type OrderFilters = {
+  date?: string;
+  orderDate?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+};
+
+const buildQueryString = (params: OrderFilters) => {
+  const query = Object.entries(params)
+    .filter(([, value]) => !!value)
+    .map(
+      ([key, value]) =>
+        `${encodeURIComponent(key)}=${encodeURIComponent(value as string)}`
+    )
+    .join("&");
+
+  return query ? `?${query}` : "";
+};
+
 // Get User with Orders
-export const getUserWithOrders = async (slotType: string, token: string) => {
+export const getUserWithOrders = async (
+  filters: OrderFilters = {},
+  token: string
+) => {
   try {
+    const queryString = buildQueryString(filters);
+    console.log('rout', `${FINAL_BASE_URL}/orders${queryString}`)
     const response = await axios.get(
-      `${FINAL_BASE_URL}/auth/orders`,
+      `${FINAL_BASE_URL}/auth/orders${queryString}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -518,6 +540,7 @@ export const getUserWithOrders = async (slotType: string, token: string) => {
     return finalResponse;
   } catch (error: any) {
     if (error.response) {
+     
       console.log("Server responded with error:", error.response.data);
       return error.response.data;
     } else if (error.request) {
