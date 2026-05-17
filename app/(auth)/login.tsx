@@ -8,12 +8,14 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 export default function Login() {
@@ -65,8 +67,16 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Green Basket — Admin</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Logo */}
+      <View style={[styles.logoContainer,]}>
+        <Image
+          source={require('@/assets/images/android-icon-foreground.png')} // replace with your logo path
+          style={styles.logo}
+        />
+        <Text style={styles.title}>Chhava Vegetables </Text>
+        <Text style={styles.subTitle}> {`(Admin)`}</Text>
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -109,13 +119,20 @@ export default function Login() {
           Do not have account? Register
         </Text>
       </TouchableOpacity> */}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 24 },
+  container: { flex: 1,padding: 24 },
+  title: { 
+    fontSize: 24, 
+    fontWeight: "700"
+  },
+  subTitle: {
+    fontSize: 22, 
+    fontWeight: "700", 
+  },
   input: {
     borderWidth: 1,
     borderColor: "#D1D5DB", // gray-300
@@ -123,6 +140,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     color: '#111',
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+    padding: 50
+  },
+  logo: {
+    width: 99,
+    height: 99,
+    resizeMode: "contain",
+    borderRadius:90
   },
   btn: {
     backgroundColor: "#2e7d32",
