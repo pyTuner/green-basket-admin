@@ -527,7 +527,6 @@ export const getUserWithOrders = async (
 ) => {
   try {
     const queryString = buildQueryString(filters);
-    console.log('rout', `${FINAL_BASE_URL}/orders${queryString}`)
     const response = await axios.get(
       `${FINAL_BASE_URL}/auth/orders${queryString}`,
       {

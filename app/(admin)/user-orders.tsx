@@ -2,8 +2,9 @@ import { getUserWithOrders, updateOrderDetails } from "@/api/axiosClient";
 import { setIsLoading } from "@/store/redux/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
@@ -78,6 +79,13 @@ const NoOrders = () => (
     <Text style={styles.emptySubtitle}>
       New customer orders will appear here.
     </Text>
+  </View>
+);
+
+const ListLoader = () => (
+  <View style={styles.emptyContainer}>
+    <ActivityIndicator color="#159c3c" />
+    <Text style={styles.listLoadingText}>Loading orders</Text>
   </View>
 );
 
@@ -211,6 +219,7 @@ const DateInput = ({
 
 export default function UserOrdersScreen() {
   const [users, setUsers] = useState<any[]>([]);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<SelectedOrder | null>(
     null,
   );
@@ -225,6 +234,8 @@ export default function UserOrdersScreen() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const latestRequestId = useRef(0);
+  const ordersCacheRef = useRef(new Map<string, any[]>());
 
   const setLoadingState = (val: boolean) => dispatch(setIsLoading(val));
 
@@ -251,13 +262,40 @@ export default function UserOrdersScreen() {
     return params;
   }, [dateFilters, statusFilter]);
 
-  const fetchOrders = async () => {
-    setLoadingState(true);
+  const orderQueryKey = useMemo(
+    () => JSON.stringify(orderQueryParams),
+    [orderQueryParams],
+  );
+
+  const fetchOrders = useCallback(async (forceRefresh = false) => {
+    if (!user?.token) {
+      setUsers([]);
+      setIsOrdersLoading(false);
+      return;
+    }
+
+    if (!forceRefresh) {
+      const cachedOrders = ordersCacheRef.current.get(orderQueryKey);
+
+      if (cachedOrders) {
+        setUsers(cachedOrders);
+        setIsOrdersLoading(false);
+        return;
+      }
+    }
+
+    const requestId = latestRequestId.current + 1;
+    latestRequestId.current = requestId;
+    setIsOrdersLoading(true);
+
     try {
       const response = await getUserWithOrders(
         orderQueryParams,
-        user?.token as string,
+        user.token as string,
       );
+
+      if (requestId !== latestRequestId.current) return;
+
       if (response.status === 200) {
         const responseUsers =
           response.body?.users ??
@@ -268,17 +306,23 @@ export default function UserOrdersScreen() {
         const filteredOrders = (responseUsers ?? []).filter(
           (userItem: any) => userItem.orders && userItem.orders.length > 0,
         );
+        ordersCacheRef.current.set(orderQueryKey, filteredOrders ?? []);
         setUsers(filteredOrders ?? []);
       } else {
+        ordersCacheRef.current.set(orderQueryKey, []);
         setUsers([]);
       }
     } catch (error) {
+      if (requestId !== latestRequestId.current) return;
+
       console.log("Failed to fetch users with orders:", error);
       setUsers([]);
     } finally {
-      setLoadingState(false);
+      if (requestId === latestRequestId.current) {
+        setIsOrdersLoading(false);
+      }
     }
-  };
+  }, [orderQueryKey, orderQueryParams, user?.token]);
 
   const updateOrderStatus = async (userId: string, orders: any[]) => {
     const payload = {
@@ -291,7 +335,8 @@ export default function UserOrdersScreen() {
       const response = await updateOrderDetails(payload, user?.token as string);
       if (response.status === 200) {
         setSelectedOrder(null);
-        await fetchOrders();
+        ordersCacheRef.current.clear();
+        await fetchOrders(true);
         Alert.alert(
           "Success",
           response?.message || "Order marked as delivered",
@@ -320,8 +365,7 @@ export default function UserOrdersScreen() {
 
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.token, orderQueryParams]);
+  }, [fetchOrders]);
 
   const orderCards = useMemo(
     () =>
@@ -422,14 +466,6 @@ export default function UserOrdersScreen() {
     </View>
   );
 
-  if (isLoading && !selectedOrder) {
-    return (
-      <View style={styles.exptyContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
   const selectedOrderTotal = selectedOrder
     ? getOrderAmount(selectedOrder.order)
     : 0;
@@ -501,17 +537,25 @@ export default function UserOrdersScreen() {
         </ScrollView>
       </View>
 
-      <FlatList
-        data={orderCards}
-        renderItem={renderOrderCard}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={NoOrders}
-        contentContainerStyle={[
-          styles.listContent,
-          !orderCards.length && styles.emptyListContent,
-        ]}
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.listArea}>
+        <FlatList
+          data={orderCards}
+          renderItem={renderOrderCard}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={isOrdersLoading ? ListLoader : NoOrders}
+          contentContainerStyle={[
+            styles.listContent,
+            !orderCards.length && styles.emptyListContent,
+          ]}
+          showsVerticalScrollIndicator={false}
+        />
+        {isOrdersLoading && orderCards.length > 0 && (
+          <View style={styles.listLoadingOverlay}>
+            <ActivityIndicator color="#159c3c" />
+            <Text style={styles.listLoadingText}>Refreshing orders</Text>
+          </View>
+        )}
+      </View>
 
       <Modal
         animationType="slide"
@@ -678,7 +722,6 @@ export default function UserOrdersScreen() {
 
             {draftDateFilters.mode === "date" && (
               <View style={styles.rangeRow}>
-
                 <DateInput
                   label="Created date"
                   value={draftDateFilters.date}
@@ -793,9 +836,37 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: "#fff",
   },
+  listArea: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 28,
+  },
+  listLoadingOverlay: {
+    position: "absolute",
+    bottom: 30,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 18,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#dfe8db",
+    shadowColor: "#101810",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 2,
+  },
+  listLoadingText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#526156",
   },
   emptyListContent: {
     flexGrow: 1,
