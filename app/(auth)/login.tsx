@@ -1,4 +1,8 @@
 import { LoginApiAdmin } from "@/api/axiosClient";
+import { setIsLoading, setUser } from "@/store/redux/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import { credentials, developerMode } from "@/utils/constants";
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -10,12 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
-import { setIsLoading, setUser } from "@/store/redux/authSlice";
+
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(developerMode? credentials.admin_username:'');
+  const [password, setPassword] = useState(developerMode? credentials.admin_password:'');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
@@ -66,16 +70,31 @@ export default function Login() {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor="#9CA3AF"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
-        secureTextEntry
+        placeholderTextColor="#9CA3AF"
+        secureTextEntry={!showPassword}
         value={password}
         onChangeText={setPassword}
       />
+       <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeIcon}
+          >
+            <Ionicons
+              name={showPassword ? 'checkbox' : 'square-outline'}
+              size={18}
+              color="#9CA3AF"
+            />
+            <Text style={{ marginLeft: 8, color: "#9CA3AF" }}>
+              {showPassword ? "Hide Passwords" : "Show Passwords"}
+            </Text>
+          </TouchableOpacity>
       <TouchableOpacity
         style={styles.btn}
         onPress={onLogin}
@@ -99,10 +118,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "700", marginBottom: 24 },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
+    borderColor: "#D1D5DB", // gray-300
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
+    color: '#111',
   },
   btn: {
     backgroundColor: "#2e7d32",
@@ -110,5 +130,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     cursor: "pointer",
+  },
+  eyeIcon: {
+    marginLeft: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
 });
